@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+    <body>
+        <h1>Redis</h1>
+        <span id="error" style="color:red"></span>
+        <ul id="list"></ul>
+
+
+        <script>
+            let list = document.querySelector('#list');
+            let message = document.querySelector('#error');
+
+            document.addEventListener('DOMContentLoaded', async function(){
+                handler(await getData())
+            });
+           
+            function addLiEvent() {
+                document.querySelectorAll('li')
+                    .forEach(li=>{
+                        li.addEventListener('click', async function (e) {
+                        e.preventDefault();
+                        clearList();
+                        handler(await sendDelete(getKey(this.innerText)));
+                    })
+                })
+            }
+
+            function createLi(key,value) {
+                const li = document.createElement("li");
+                const node = document.createTextNode(`{${key}}:{${value}} `);
+                const link = document.createElement("a");
+                link.href='#';
+                link.classList='remove';
+                link.text = 'delete';
+                li.appendChild(node);
+                li.appendChild(link);
+                list.appendChild(li);
+            }
+
+            function handler(datas) {
+                if (datas.status) {
+                    for(let key in datas.data){
+                        createLi(key,datas.data[key]);
+                    }
+
+                    addLiEvent();
+                }else{
+                    message.innerText = datas.data.message;
+                }
+            }
+
+            function clearList() {
+                list.innerHTML = '';
+            }
+
+            function getKey(text) {
+                return text.match(/[A-Za-zА-Яа-я0-9]+|:\}/i)[0];
+            }
+
+            async function getData() {
+                return await fetch('/api/redis').then(r => r.json());
+            }
+
+            async function sendDelete(key) {
+                return await fetch(`/api/redis/${key}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'text/html; charset=UTF-8'
+                    },
+                }).then(r => r.json());
+            }
+        </script>   
+    </body>
+</html>
